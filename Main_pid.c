@@ -8,11 +8,16 @@
 
 signed int dac_value ;
 double chanelA , chanelB ; 
-int out_data;
+int out_data, out_data1 ;
 signed int container ; 
 
+volatile bool print_control = false;
+volatile bool buffer_control = true;
+
+
+
 //Define  PID controller .5, 50 ,0.000001  -0.1, 0 ,0.000000009 .5, 0 ,0.00009, .1, 0 ,0.0000009 //.1, 0 ,0.0009,
-PIDcontroller pid = {0,0,0, time_constant, Sample_time, In_min_lim, In_max_lim, Pid_voltage_max, Pid_voltage_min };
+PIDcontroller pid = {10,0,0, time_constant, Sample_time, In_min_lim, In_max_lim, Pid_voltage_max, Pid_voltage_min };
 
 void SWITCH(void);
 
@@ -54,7 +59,7 @@ void __ISR(_TIMER_3_VECTOR ,IPL2AUTO) Timer3_ISR(void){
     
     if (buffer_control){
       //CIRCULAR_BUFFER(ADC_Data,(signed int)out_data);
-        CIRCULAR_BUFFER(ADC_Data,float_out);
+        CIRCULAR_BUFFER(ADC_Data,output);
      }
     
     TOGGLE_LED( ); 
@@ -107,10 +112,10 @@ void main(void){
   
   
 while (1){     
-    do{
+    do{ 
         ;
     }while(!print_control); 
-    
+        
         save_data(); 
  
 }
@@ -127,8 +132,8 @@ void SWITCH(void)
                         }
 
 void INIT_DACSPI (void){
-    mPORTBSetPinsDigitalOut(BIT_15 | BIT_11| BIT_7 ); // SCK||SDO||CS
-    PPSOutput(2,RPB11,SDO2); // pin 22
+    mPORTBSetPinsDigitalOut(BIT_15 | BIT_1| BIT_7 ); // SCK||SDO||CS
+    PPSOutput(2,RPB1,SDO2); // pin 5
     SPI2STATCLR = 0x40;
     SPI2CON = 0;
     char clr_Buf = SPI2BUF;
@@ -140,6 +145,8 @@ void INIT_DACSPI (void){
 unsigned char DAC_send(unsigned char des){
     SPI2BUF = des; //write
     while (SPI2STATbits.SPIBUSY);
+//    while (SPI2STATbits. SPIRBF);
+   
     return SPI2BUF;
     
 
@@ -186,40 +193,25 @@ void  End_transfer(void){
 }
 
 
+
+           
+
 //void CIRCULAR_BUFFER(signed int Avg1, signed int Avg2){  //signed short Avg2
-////    if (type == 'L') 
-////        Avg2 = -Avg2 ;
-//            
-//    if(!buffer_full()){
+//
 //        FIFO[count_send] = Avg1;   
 //        Test[count_send] = Avg2;   
-////        channel[count_send] = type;
-//        
-//        ++count_send;   
 //
-//        if (count_send >= max_count){
-//            count_send = 0;         
-//        }          
-//    }
-//    else{   
-//        FIFO[count_send] = 0x55;   
-//        Test[count_send] = 0x55;
-//      //  channel[count_send] = 0x55;
-//    }
+//        ++count_send;   
 //                                       
 //    if (count_send >= NSAMPLES){
-//        End_transfer();
-//        buffer_control = true;       
+//        buffer_control = false; // cannot collect more data
+//        print_control = true;
+//        
 //    }
 //}
 
 
-
-/* For printing the float 
- */
-                
-
-void CIRCULAR_BUFFER(signed int Avg1, float Avg2){  //signed short Avg2
+void CIRCULAR_BUFFER(signed int Avg1,  float Avg2){  //signed short Avg2
 
         FIFO[count_send] = Avg1;   
         Test[count_send] = Avg2;   
@@ -232,6 +224,7 @@ void CIRCULAR_BUFFER(signed int Avg1, float Avg2){  //signed short Avg2
         
     }
 }
+
 
 
 /**************************************************
