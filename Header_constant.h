@@ -23,6 +23,9 @@ unsigned int dummy[5] = {0x25, 0x00, 0x00, 0x00, 0x00};
 volatile signed int D1, D2 = 0, D3 = 0, D4;
 volatile signed int D0 = 0;
 volatile unsigned int count_send = 0, k = 0,print = 0, count = 0, wait = 0;
+
+unsigned int pwm_period = 320-1;//640-1;//320-1; //PWm period calculation kevinc Lych
+unsigned int pwm_on_time = 160-1;//320-1;//160-1 ;
 unsigned int controller_period = 6400-1;//320-1;
 unsigned int ADC_res = 8388607; //2^24
 
