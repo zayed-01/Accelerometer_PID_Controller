@@ -9,7 +9,7 @@
 #define Points_No  3
 
 
-#define u32t signed int //float
+#define u32t float  //signed int //float
 
 #define DAC_CS  PORTBbits.RB7
 #define BUFF_SIZE       40
