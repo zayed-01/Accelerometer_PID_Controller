@@ -29,24 +29,29 @@ void setGain(PIDcontroller *pid, var32type kp, var32type ki, var32type kd){
 	pid->Kd = kd;
 }
 
-var32type PIDController_update(PIDcontroller *pid, var32type sp, signed int measured_value){
-
+int PIDController_update(PIDcontroller *pid, var32type sp, signed int measured_value){
+    double vel;
     var32type measured_voltage =  (double)(measured_value/pow(2,23))*2.442 ;
-    var32type error = measured_voltage ; //calculation here is in decimal
+    var32type error = measured_voltage ;//- .009 ; //calculation here is in decimal
 	pid->proportional = pid->Kp * error;
     
-	pid->integrator = pid->integrator + pid->Ki*pid->T*0.5*(error+ pid->prev_error);
+    
+	pid->integrator = pid->integrator + pid->Ki*pid->T*0.5*(error+ pid->prev_error) ;
 	if (pid->integrator > pid->integral_max){
        	pid->integrator = pid->integral_max;  //integral windup
     }else if (pid->integrator < pid->integral_min){
 		pid->integrator = pid->integral_min;
 	} 
     
-    pid->diff = (pid->Kd*(measured_voltage - pid->prev_meas)/0.0001); 
+    pid->velo =(measured_voltage - pid->prev_meas)/0.0001;
+    vel = (measured_voltage - pid->prev_meas)/0.0001;
+    pid->velocity = low_pass_filter(&filter_1, vel);
+    pid->diff = (pid->Kd*pid->velocity ); 
     
-    var32type differ = low_pass_filter(&filter_1, pid->diff);
     
-	pid->voltage_out = pid->proportional + pid->integrator+ differ ; 
+    
+	pid->voltage_out = pid->proportional + pid->integrator+ pid->diff ; 
+    
 	if (pid->voltage_out > pid->voltage_max){
 		pid->voltage_out = pid->voltage_max;
         sat_switch = false; 
