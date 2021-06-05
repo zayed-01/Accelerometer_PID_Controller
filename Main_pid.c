@@ -17,7 +17,7 @@ volatile bool buffer_control = true;
 
 
 //Define  PID controller .5, 50 ,0.000001  -0.1, 0 ,0.000000009 .5, 0 ,0.00009, .1, 0 ,0.0000009 //.1, 0 ,0.0009,
-PIDcontroller pid = {0.3,0,0,time_constant, Sample_time, In_min_lim, In_max_lim, Pid_voltage_max, Pid_voltage_min };
+PIDcontroller pid = {0,0,0,time_constant, Sample_time, In_min_lim, In_max_lim, Pid_voltage_max, Pid_voltage_min };
 
 void SWITCH(void);
 
@@ -48,7 +48,7 @@ void __ISR(_TIMER_3_VECTOR ,IPL2AUTO) Timer3_ISR(void){
       
     output = (int)PIDController_update(&pid,0,ADC_Data);
     out_data = (unsigned short)(abs(output)) ; 
-    if (pid.velocity > 0){ //going towards bottom electrode  //chn A is top electrode. Write the higher value to the channel                       
+    if (ADC_Data > 0){ //going towards bottom electrode  //chn A is top electrode. Write the higher value to the channel                       
         DAC_WRITE(2047-out_data,2047+out_data); //  900 Hz it works
        // DAC_WRITE(2047+out_data,2047-out_data);//chan(b,a) f
         //DAC_WRITE(0,0);
@@ -62,7 +62,7 @@ void __ISR(_TIMER_3_VECTOR ,IPL2AUTO) Timer3_ISR(void){
     if (buffer_control){
       //CIRCULAR_BUFFER(ADC_Data,(signed int)out_data);
        // CIRCULAR_BUFFER(ADC_Data,output);
-        CIRCULAR_BUFFER(ADC_Data,output);
+        CIRCULAR_BUFFER(ADC_Data,pid.velocity);
      }
     
     TOGGLE_LED( ); 
@@ -90,9 +90,12 @@ void main(void){
     INIT_LED();
     INIT_UART();
     INIT_ADC_SPI();
-    INIT_DACSPI ();
+    INIT_DACSPI();
+    DAC_WRITE(0,0); 
+    
     SWITCH();
     ADC();
+    
     Init_timer3();
     INTEnableSystemMultiVectoredInt();
     init_EXT_INT();
@@ -174,7 +177,7 @@ void DAC_WRITE(unsigned short chnB,unsigned short chnA){
 void save_data(){
     for(sent = 0; sent < NSAMPLES; ++sent){
        // sprintf(buffer,"%f\t%f\t%f\n",((double)(sent+1)*0.0002),((double)(FIFO[k]*4.884)/pow(2,24)), ((double)Test[k]*4.884)/pow(2,24));  //((double)Test[k]*10)/pow(2,12));
-        sprintf(buffer,"%f\t%f\t%d\n",((double)(sent+1)*0.0002),((double)(FIFO[sent]*4.884)/pow(2,24)), Test[sent]); //for float
+        sprintf(buffer,"%f\t%f\t%f\n",((double)(sent+1)*0.0002),((double)(FIFO[sent]*4.884)/pow(2,24)), Test[sent]); //for float
         while(!UARTTransmitterIsReady(UART2));
        
         SendString(buffer);                                    
