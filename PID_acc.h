@@ -19,7 +19,7 @@
 //macros for constant
 
 
-#define var32type  int
+#define var32type  double
 
 #define In_max_lim .5
 #define In_min_lim -.5
@@ -54,6 +54,8 @@ typedef struct
     var32type proportional; 
 	var32type prev_meas;
 	var32type error;
+    var32type velocity ; 
+    var32type velo ; 
 
 	//output voltage
 	var32type voltage_out;
@@ -74,7 +76,7 @@ Input : Address of the controller, set point, value from ADC
 Output: Output control voltage
 Function: This functions calculates the controller output 
 */
-var32type PIDController_update(PIDcontroller *pid, var32type sp, signed int measured_value);
+int PIDController_update(PIDcontroller *pid, var32type sp, signed int measured_value);
 
 /* Function : Setting gain of the controller 
 Input : Address of the controller, PID gains
